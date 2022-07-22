@@ -1,9 +1,33 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_styled_toast/flutter_styled_toast.dart';
+import 'package:logging/logging.dart';
 import 'package:paintroid/ui/color_schemes.dart';
+import 'package:paintroid/workspace/workspace.dart';
 import 'package:paintroid/ui/landing_page.dart';
 
-void main() {
-  runApp(const PocketPaintApp());
+void main() async {
+  Logger.root.onRecord.listen((record) {
+    log(record.message,
+        time: record.time,
+        sequenceNumber: record.sequenceNumber,
+        level: record.level.value,
+        name: record.loggerName,
+        zone: record.zone,
+        error: record.error,
+        stackTrace: record.stackTrace);
+  });
+  final container = ProviderContainer();
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const PocketPaintApp(),
+    ),
+  );
+  final size = await container.read(DrawCanvas.sizeProvider.future);
+  container.read(CanvasState.provider.notifier).updateCanvasSize(size);
 }
 
 class PocketPaintApp extends StatelessWidget {
@@ -14,9 +38,19 @@ class PocketPaintApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pocket Paint',
       theme: ThemeData.from(useMaterial3: true, colorScheme: lightColorScheme),
-      darkTheme:
-          ThemeData.from(useMaterial3: true, colorScheme: darkColorScheme),
-      home: const LandingPage(),
+      home: StyledToast(
+        toastAnimation: StyledToastAnimation.fade,
+        reverseAnimation: StyledToastAnimation.fade,
+        curve: Curves.easeInOut,
+        reverseCurve: Curves.easeInOut,
+        backgroundColor: Colors.white70,
+        toastPositions: const StyledToastPosition(align: Alignment(0, 0.75)),
+        duration: const Duration(seconds: 3, milliseconds: 400),
+        textStyle: const TextStyle(color: Colors.black),
+        borderRadius: BorderRadius.circular(20),
+        locale: const Locale('en'),
+        child: const LandingPage(),
+      ),
     );
   }
 }
