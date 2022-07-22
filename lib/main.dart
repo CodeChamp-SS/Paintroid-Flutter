@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paintroid/ui/color_schemes.dart';
-
-import 'ui/pocket_paint.dart';
+import 'package:paintroid/ui/landing_page.dart';
 
 void main() {
   runApp(const PocketPaintApp());
@@ -17,7 +16,7 @@ class PocketPaintApp extends StatelessWidget {
       theme: ThemeData.from(useMaterial3: true, colorScheme: lightColorScheme),
       darkTheme:
           ThemeData.from(useMaterial3: true, colorScheme: darkColorScheme),
-      home: const PocketPaint(title: 'Pocket Paint'),
+      home: const LandingPage(),
     );
   }
 }
