@@ -6,8 +6,7 @@ import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:logging/logging.dart';
 import 'package:paintroid/ui/color_schemes.dart';
 import 'package:paintroid/workspace/workspace.dart';
-
-import 'ui/pocket_paint.dart';
+import 'package:paintroid/ui/landing_page.dart';
 
 void main() async {
   Logger.root.onRecord.listen((record) {
@@ -50,7 +49,7 @@ class PocketPaintApp extends StatelessWidget {
         textStyle: const TextStyle(color: Colors.black),
         borderRadius: BorderRadius.circular(20),
         locale: const Locale('en'),
-        child: const PocketPaint(),
+        child: const LandingPage(),
       ),
     );
   }
