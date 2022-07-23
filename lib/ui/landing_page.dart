@@ -13,8 +13,6 @@ class LandingPage extends StatelessWidget {
     return MaterialApp(
       title: 'Pocket Paint',
       theme: ThemeData.from(useMaterial3: true, colorScheme: lightColorScheme),
-      darkTheme:
-          ThemeData.from(useMaterial3: true, colorScheme: darkColorScheme),
       home: Scaffold(
         appBar: AppBar(
           title: const Text("Pocket Paint"),
@@ -55,8 +53,7 @@ class LandingPage extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const PocketPaint(title: "Pocket Paint"),
+                    builder: (context) => const PocketPaint(),
                   ),
                 );
               },
