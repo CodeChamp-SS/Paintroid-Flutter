@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:paintroid/io/io.dart';
 import 'package:paintroid/ui/top_app_bar.dart';
 import 'package:paintroid/workspace/workspace.dart';
 
@@ -30,9 +31,12 @@ class PocketPaint extends ConsumerWidget {
     final scale = canvasWidth / (MediaQuery.of(context).size.width + 24);
     return WillPopScope(
       onWillPop: () async {
-        final willPop = !isFullscreen;
+        var willPop = !isFullscreen;
         if (isFullscreen) {
           ref.read(WorkspaceState.provider.notifier).toggleFullscreen(false);
+        } else {
+          var b = await showDiscardChangesDialog(context);
+          willPop = b!;
         }
         return willPop;
       },

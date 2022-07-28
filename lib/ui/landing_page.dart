@@ -17,6 +17,16 @@ class LandingPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ioHandler = ref.watch(IOHandler.provider);
     final size = MediaQuery.of(context).size;
+
+    final tempList = [
+      "project 1",
+      "project 2",
+      "project 3",
+      "project 4",
+      "project 5",
+      "project 6"
+    ];
+
     return MaterialApp(
       title: 'Pocket Paint',
       theme: ThemeData.from(useMaterial3: true, colorScheme: lightColorScheme),
@@ -25,29 +35,96 @@ class LandingPage extends ConsumerWidget {
         appBar: AppBar(
           title: const Text("Pocket Paint"),
         ),
-        body: SizedBox(
-          height: size.height / 3,
-          child: Stack(
-            children: [
-              Material(
-                child: InkWell(
-                  onTap: () {},
-                  child: const Placeholder(),
-                ),
+        body: Column(
+          children: [
+            SizedBox(
+              height: size.height / 3,
+              child: Stack(
+                children: [
+                  Material(
+                    child: InkWell(
+                      onTap: () {},
+                      child: const Placeholder(),
+                    ),
+                  ),
+                  Center(
+                    child: IconButton(
+                      iconSize: 264,
+                      onPressed: () {},
+                      icon: SvgPicture.asset(
+                        "assets/svg/ic_edit_circle.svg",
+                        height: 264,
+                        width: 264,
+                      ),
+                    ),
+                  )
+                ],
               ),
-              Center(
-                child: IconButton(
-                  iconSize: 264,
-                  onPressed: () {},
-                  icon: SvgPicture.asset(
-                    "assets/svg/ic_edit_circle.svg",
-                    height: 264,
-                    width: 264,
+            ),
+            SizedBox(
+              height: size.height / 12,
+              child: Container(
+                color: lightColorScheme.primaryContainer,
+                width: size.width,
+                padding: const EdgeInsets.all(20),
+                child: const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "My Projects",
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Color(0xFFFFFFFF)),
                   ),
                 ),
-              )
-            ],
-          ),
+              ),
+            ),
+            Flexible(
+              child: ListView.builder(
+                itemBuilder: (context, position) {
+                  return Card(
+                    // margin: const EdgeInsets.all(5),
+                    child: ListTile(
+                      leading:Container(
+                        width: 80,
+                        decoration: const BoxDecoration(color: Colors.white),
+                      ),
+                      dense: false,
+                      title: Text(
+                        tempList[position],
+                        style: const TextStyle(color: Color(0xFFFFFFFF)),
+                      ),
+                      subtitle: const Text(
+                        'last modified:',
+                        style: TextStyle(color: Color(0xFFFFFFFF)),
+                      ),
+                      trailing: GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () {
+                          print('more_vert clicked $position');
+                        },
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.more_vert),
+                        ),
+                      ),
+                      // trailing: const Icon(Icons.more_vert),
+                      enabled: true,
+                      onTap: () {
+                        print('clicked $position');
+                      },
+                    ),
+                  );
+                },
+                itemCount: tempList.length,
+                scrollDirection: Axis.vertical,
+                shrinkWrap: true,
+              ),
+            ),
+          ],
         ),
         floatingActionButton: Column(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -90,6 +167,89 @@ class LandingPage extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class CustomListItem extends StatelessWidget {
+  const CustomListItem({
+    Key? key,
+    required this.thumbnail,
+    required this.title,
+    required this.lastModified,
+  }) : super(key: key);
+
+  final Widget thumbnail;
+  final String title;
+  final int lastModified;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            flex: 2,
+            child: thumbnail,
+          ),
+          Expanded(
+            flex: 3,
+            child: ProjectDescription(
+              title: title,
+              lastModified: lastModified,
+            ),
+          ),
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              print('more_vert clicked');
+            },
+            child: Container(
+              width: 16,
+              height: 16,
+              alignment: Alignment.center,
+              child: const Icon(Icons.more_vert),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProjectDescription extends StatelessWidget {
+  const ProjectDescription({
+    Key? key,
+    required this.title,
+    required this.lastModified,
+  }) : super(key: key);
+
+  final String title;
+  final int lastModified;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(5.0, 0.0, 0.0, 0.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14.0,
+            ),
+          ),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 2.0)),
+          Text(
+            "last modified: $lastModified",
+            style: const TextStyle(fontSize: 10.0),
+          ),
+        ],
       ),
     );
   }
