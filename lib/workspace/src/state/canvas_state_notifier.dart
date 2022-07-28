@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'
     show StateNotifier, StateNotifierProvider;
+import 'package:oxidized/oxidized.dart';
 import 'package:paintroid/command/command.dart';
 import 'package:paintroid/core/graphic_factory.dart';
 
@@ -29,20 +30,23 @@ class CanvasStateNotifier extends StateNotifier<CanvasState> {
     final picture = recorder.endRecording();
     final image = await picture.toImage(
         state.size.width.toInt(), state.size.height.toInt());
-    state = state.copyWith(lastRenderedImage: image);
+    state = state.copyWith(lastRenderedImage: Option.some(image));
   }
 
-  void clearLastRenderedImage() =>
-      state = state.copyWith(lastRenderedImage: null);
+  void clearCanvas() {
+    _commandManager.resetHistory();
+    state = state.copyWith(lastRenderedImage: Option.none());
+  }
 
-  void renderAndReplaceImageWithAllCommands() async {
+  void renderAndReplaceImageWithCommands(Iterable<Command> commands) async {
     final recorder = _graphicFactory.createPictureRecorder();
     final canvas = _graphicFactory.createCanvasWithRecorder(recorder);
     canvas.clipRect(Rect.fromLTWH(0, 0, state.size.width, state.size.height));
+    _commandManager.resetHistory(newCommands: commands);
     _commandManager.executeAllCommands(canvas);
     final picture = recorder.endRecording();
     final image = await picture.toImage(
         state.size.width.toInt(), state.size.height.toInt());
-    state = state.copyWith(lastRenderedImage: image);
+    state = state.copyWith(lastRenderedImage: Option.some(image));
   }
 }
