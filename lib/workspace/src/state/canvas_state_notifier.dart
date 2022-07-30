@@ -16,37 +16,50 @@ class CanvasStateNotifier extends StateNotifier<CanvasState> {
   final CommandManager _commandManager;
   final GraphicFactory _graphicFactory;
 
-  void updateCanvasSize(Size newSize) => state = state.copyWith(size: newSize);
+  final _imageScale = window.devicePixelRatio;
 
-  void renderImageWithLastCommand() async {
-    final recorder = _graphicFactory.createPictureRecorder();
-    final canvas = _graphicFactory.createCanvasWithRecorder(recorder);
-    final bounds = Rect.fromLTWH(0, 0, state.size.width, state.size.height);
-    canvas.clipRect(bounds);
-    if (state.lastRenderedImage != null) {
-      paintImage(canvas: canvas, rect: bounds, image: state.lastRenderedImage!);
+  void updateCanvasSize(Size newSize) async {
+    state = state.copyWith(size: newSize);
+    if (_commandManager.count > 0) {
+      reCacheImageForAllCommands();
     }
-    _commandManager.executeLastCommand(canvas);
-    final picture = recorder.endRecording();
-    final image = await picture.toImage(
-        state.size.width.toInt(), state.size.height.toInt());
-    state = state.copyWith(lastRenderedImage: Option.some(image));
   }
 
-  void clearCanvas() {
-    _commandManager.resetHistory();
-    state = state.copyWith(lastRenderedImage: Option.none());
-  }
-
-  void renderAndReplaceImageWithCommands(Iterable<Command> commands) async {
+  void reCacheImageForAllCommands() async {
     final recorder = _graphicFactory.createPictureRecorder();
     final canvas = _graphicFactory.createCanvasWithRecorder(recorder);
-    canvas.clipRect(Rect.fromLTWH(0, 0, state.size.width, state.size.height));
-    _commandManager.resetHistory(newCommands: commands);
+    final size = state.size * _imageScale;
+    canvas.scale(_imageScale);
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
     _commandManager.executeAllCommands(canvas);
     final picture = recorder.endRecording();
-    final image = await picture.toImage(
-        state.size.width.toInt(), state.size.height.toInt());
-    state = state.copyWith(lastRenderedImage: Option.some(image));
+    final img = await picture.toImage(size.width.toInt(), size.height.toInt());
+    state = state.copyWith(cachedImage: Option.some(img));
+  }
+
+  void updateCachedImage() async {
+    final recorder = _graphicFactory.createPictureRecorder();
+    final canvas = _graphicFactory.createCanvasWithRecorder(recorder);
+    final size = state.size * _imageScale;
+    final bounds = Rect.fromLTWH(0, 0, size.width, size.height);
+    if (state.cachedImage != null) {
+      paintImage(
+          canvas: canvas,
+          rect: bounds,
+          image: state.cachedImage!,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.none);
+    }
+    canvas.scale(_imageScale);
+    canvas.clipRect(bounds);
+    _commandManager.executeLastCommand(canvas);
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(size.width.toInt(), size.height.toInt());
+    state = state.copyWith(cachedImage: Option.some(img));
+  }
+
+  void clearCanvasAndCommandHistory() {
+    _commandManager.clearHistory();
+    state = state.copyWith(cachedImage: Option.none());
   }
 }
