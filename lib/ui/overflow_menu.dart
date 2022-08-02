@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paintroid/io/io.dart';
 import 'package:paintroid/ui/io_handler.dart';
 import 'package:paintroid/workspace/workspace.dart';
-import 'package:path_provider/path_provider.dart';
 
 enum OverflowMenuOption {
   fullscreen("Fullscreen"),
@@ -72,10 +71,11 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
       ref.read(WorkspaceState.provider.notifier).toggleFullscreen(true);
 
   Future<void> _saveImage() async {
+    final workspaceStateNotifier = ref.read(WorkspaceState.provider.notifier);
     final imageData = await showSaveImageDialog(context, false);
     if (imageData == null) return;
-    await ioHandler.saveImage(imageData);
-    ref.read(WorkspaceState.provider.notifier).updateLastSavedCommandCount();
+    workspaceStateNotifier.performIOTask(() => ioHandler.saveImage(imageData));
+    workspaceStateNotifier.updateLastSavedCommandCount();
   }
 
   Future<File?> _saveProject() async {
@@ -103,7 +103,8 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
       if (!shouldDiscard) {
         final imageData = await showSaveImageDialog(context, false);
         if (imageData == null) return false;
-        await ioHandler.saveImage(imageData);
+        workspaceStateNotifier
+            .performIOTask(() => ioHandler.saveImage(imageData));
         workspaceStateNotifier.updateLastSavedCommandCount();
       }
     }
@@ -117,9 +118,13 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
       if (!mounted) return;
       final location = await showLoadImageDialog(context);
       if (location == null) return;
-      await ioHandler.loadImage(location);
+      ref
+          .read(WorkspaceState.provider.notifier)
+          .performIOTask(() => ioHandler.loadImage(location));
     } else {
-      await ioHandler.loadImage(ImageLocation.files);
+      ref
+          .read(WorkspaceState.provider.notifier)
+          .performIOTask(() => ioHandler.loadImage(ImageLocation.files));
     }
   }
 

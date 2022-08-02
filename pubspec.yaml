@@ -26,6 +26,7 @@ dependencies:
   floor: ^1.2.0
   intl: ^0.17.0
   sqflite:
+  permission_handler: ^10.0.0
 
 dev_dependencies:
   flutter_test:
