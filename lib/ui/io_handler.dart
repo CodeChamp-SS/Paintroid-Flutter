@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:oxidized/oxidized.dart';
@@ -63,12 +67,24 @@ class IOHandler {
     );
   }
 
-  Future<void> saveImage(ImageMetaData imageData) async {
+  Future<Uint8List> _getProviderFromImage(Image image) async {
+    final ByteData? bytedata =
+        await image.toByteData(format: ImageByteFormat.png);
+    if (bytedata == null) {
+      return Future.error("some error msg");
+    }
+    final Uint8List headedIntList = Uint8List.view(bytedata.buffer);
+    return headedIntList;
+  }
+
+  Future<File?> saveImage(ImageMetaData imageData) async {
+    File? savedFile;
     if (imageData is JpgMetaData || imageData is PngMetaData) {
       await _saveAsRasterImage(imageData);
     } else if (imageData is CatrobatImageMetaData) {
-      await _saveAsCatrobatImage(imageData);
+      savedFile = await _saveAsCatrobatImage(imageData);
     }
+    return savedFile;
   }
 
   Future<void> _saveAsRasterImage(ImageMetaData imageData) async {
@@ -81,7 +97,22 @@ class IOHandler {
         );
   }
 
-  Future<void> _saveAsCatrobatImage(CatrobatImageMetaData imageData) async {
+  Future<Uint8List?> getPreview(ImageMetaData imageData) async {
+    final image = await ref
+        .read(RenderImageForExport.provider)
+        .call(keepTransparency: imageData.format != ImageFormat.jpg);
+    final pngImage = await ref.read(IImageService.provider).exportAsPng(image);
+    final img = pngImage.when(
+      ok: (img) => img,
+      err: (failure) {
+        showToast(failure.message);
+        return null;
+      },
+    );
+    return img;
+  }
+
+  Future<File?> _saveAsCatrobatImage(CatrobatImageMetaData imageData) async {
     final commands = ref.read(CommandManager.provider).history;
     final workspaceState = ref.read(WorkspaceState.provider);
     final imgWidth = workspaceState.exportSize.width.toInt();
@@ -90,9 +121,14 @@ class IOHandler {
         commands, imgWidth, imgHeight, workspaceState.backgroundImage);
     final saveAsCatrobatImage = ref.read(SaveAsCatrobatImage.provider);
     final result = await saveAsCatrobatImage(imageData, catrobatImage);
+    File? savedFile;
     result.when(
-      ok: (file) => showToast("Saved successfully"),
+      ok: (file) {
+        showToast("Saved successfully");
+        savedFile = file;
+      },
       err: (failure) => showToast(failure.message),
     );
+    return savedFile;
   }
 }

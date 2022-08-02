@@ -1,20 +1,42 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:paintroid/data/model/project.dart';
+import 'package:paintroid/data/project_database.dart';
 import 'package:paintroid/ui/pocket_paint.dart';
+import 'package:intl/intl.dart';
 
 import '../io/src/entity/image_location.dart';
 import '../io/src/ui/load_image_dialog.dart';
 import 'color_schemes.dart';
 import 'io_handler.dart';
 
-class LandingPage extends ConsumerWidget {
-  const LandingPage({Key? key}) : super(key: key);
+class LandingPage extends ConsumerStatefulWidget {
+  final String title;
+
+  const LandingPage({Key? key, required this.title}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LandingPage> createState() => _LandingPageState();
+}
+
+class _LandingPageState extends ConsumerState<LandingPage> {
+  late ProjectDatabase database;
+
+  @override
+  void initState() {
+    super.initState();
+    $FloorProjectDatabase
+        .databaseBuilder("project_database.db")
+        .build()
+        .then((db) => database = db);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ioHandler = ref.watch(IOHandler.provider);
     final size = MediaQuery.of(context).size;
 
@@ -27,146 +49,170 @@ class LandingPage extends ConsumerWidget {
       "project 6"
     ];
 
-    return MaterialApp(
-      title: 'Pocket Paint',
-      theme: ThemeData.from(useMaterial3: true, colorScheme: lightColorScheme),
-      home: Scaffold(
-        backgroundColor: lightColorScheme.primary,
-        appBar: AppBar(
-          title: const Text("Pocket Paint"),
-        ),
-        body: Column(
-          children: [
-            SizedBox(
-              height: size.height / 3,
-              child: Stack(
-                children: [
-                  Material(
-                    child: InkWell(
-                      onTap: () {},
-                      child: const Placeholder(),
-                    ),
-                  ),
-                  Center(
-                    child: IconButton(
-                      iconSize: 264,
-                      onPressed: () {},
-                      icon: SvgPicture.asset(
-                        "assets/svg/ic_edit_circle.svg",
-                        height: 264,
-                        width: 264,
-                      ),
-                    ),
-                  )
-                ],
-              ),
-            ),
-            SizedBox(
-              height: size.height / 12,
-              child: Container(
-                color: lightColorScheme.primaryContainer,
-                width: size.width,
-                padding: const EdgeInsets.all(20),
-                child: const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "My Projects",
-                    textAlign: TextAlign.start,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Color(0xFFFFFFFF)),
-                  ),
-                ),
-              ),
-            ),
-            Flexible(
-              child: ListView.builder(
-                itemBuilder: (context, position) {
-                  return Card(
-                    // margin: const EdgeInsets.all(5),
-                    child: ListTile(
-                      leading:Container(
-                        width: 80,
-                        decoration: const BoxDecoration(color: Colors.white),
-                      ),
-                      dense: false,
-                      title: Text(
-                        tempList[position],
-                        style: const TextStyle(color: Color(0xFFFFFFFF)),
-                      ),
-                      subtitle: const Text(
-                        'last modified:',
-                        style: TextStyle(color: Color(0xFFFFFFFF)),
-                      ),
-                      trailing: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () {
-                          print('more_vert clicked $position');
-                        },
-                        child: Container(
-                          width: 48,
-                          height: 48,
-                          alignment: Alignment.center,
-                          child: const Icon(Icons.more_vert),
+    Future<List<Project>> _getProjects() async {
+      return await database.projectDAO.getProjects();
+    }
+
+    return Scaffold(
+      backgroundColor: lightColorScheme.primary,
+      appBar: AppBar(
+        title: const Text("Pocket Paint"),
+      ),
+      body: FutureBuilder(
+        future: _getProjects(),
+        builder: (BuildContext context, AsyncSnapshot<List<Project>> snapshot) {
+          if (snapshot.hasData) {
+            return Column(
+              children: [
+                SizedBox(
+                  height: size.height / 3,
+                  child: Stack(
+                    children: [
+                      Material(
+                        child: InkWell(
+                          onTap: () {},
+                          child: const Placeholder(),
                         ),
                       ),
-                      // trailing: const Icon(Icons.more_vert),
-                      enabled: true,
-                      onTap: () {
-                        print('clicked $position');
-                      },
+                      Center(
+                        child: IconButton(
+                          iconSize: 264,
+                          onPressed: () {},
+                          icon: SvgPicture.asset(
+                            "assets/svg/ic_edit_circle.svg",
+                            height: 264,
+                            width: 264,
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  height: size.height / 12,
+                  child: Container(
+                    color: lightColorScheme.primaryContainer,
+                    width: size.width,
+                    padding: const EdgeInsets.all(20),
+                    child: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "My Projects",
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            color: Color(0xFFFFFFFF)),
+                      ),
                     ),
-                  );
-                },
-                itemCount: tempList.length,
-                scrollDirection: Axis.vertical,
-                shrinkWrap: true,
-              ),
-            ),
-          ],
-        ),
-        floatingActionButton: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              heroTag: "btn1",
-              backgroundColor: const Color(0xFFFFAB08),
-              foregroundColor: const Color(0xFFFFFFFF),
-              child: const Icon(Icons.file_download),
-              onPressed: () async {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const PocketPaint(),
                   ),
-                );
-                if (Platform.isIOS) {
-                  final location = await showLoadImageDialog(context);
-                  if (location == null) return;
-                  ioHandler.loadImage(location);
-                } else {
-                  ioHandler.loadImage(ImageLocation.files);
-                }
-              },
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            FloatingActionButton(
-              heroTag: "btn2",
-              backgroundColor: const Color(0xFFFFAB08),
-              foregroundColor: const Color(0xFFFFFFFF),
-              child: const Icon(Icons.add),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const PocketPaint(),
+                ),
+                Flexible(
+                  child: ListView.builder(
+                    itemBuilder: (context, position) {
+                      // todo: use snapshot to fill the list
+                      Project project = snapshot.data![position];
+                      print(project);
+                      BoxDecoration imagePreview;
+                      Uint8List? img = project.imagePreview;
+                      if (img != null) {
+                        imagePreview = BoxDecoration(
+                            image: DecorationImage(image: MemoryImage(img)));
+                      } else {
+                        imagePreview = const BoxDecoration(color: Colors.white);
+                      }
+                      final DateFormat formatter = DateFormat('dd-MM-yyyy');
+                      final String lastModified =
+                          formatter.format(project.lastModified);
+
+                      return Card(
+                        // margin: const EdgeInsets.all(5),
+                        child: ListTile(
+                          leading: Container(
+                            width: 80,
+                            decoration: imagePreview,
+                          ),
+                          dense: false,
+                          title: Text(
+                            project.name,
+                            style: const TextStyle(color: Color(0xFFFFFFFF)),
+                          ),
+                          subtitle: Text(
+                            'last modified: $lastModified',
+                            style: const TextStyle(color: Color(0xFFFFFFFF)),
+                          ),
+                          trailing: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTap: () {
+                              print('more_vert clicked $position');
+                            },
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              alignment: Alignment.center,
+                              child: const Icon(Icons.more_vert),
+                            ),
+                          ),
+                          // trailing: const Icon(Icons.more_vert),
+                          enabled: true,
+                          onTap: () {
+                            print('clicked $position');
+                          },
+                        ),
+                      );
+                    },
+                    itemCount: snapshot.data?.length,
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+              ],
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            heroTag: "btn1",
+            backgroundColor: const Color(0xFFFFAB08),
+            foregroundColor: const Color(0xFFFFFFFF),
+            child: const Icon(Icons.file_download),
+            onPressed: () async {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const PocketPaint(),
+                ),
+              );
+              if (Platform.isIOS) {
+                final location = await showLoadImageDialog(context);
+                if (location == null) return;
+                ioHandler.loadImage(location);
+              } else {
+                ioHandler.loadImage(ImageLocation.files);
+              }
+            },
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          FloatingActionButton(
+            heroTag: "btn2",
+            backgroundColor: const Color(0xFFFFAB08),
+            foregroundColor: const Color(0xFFFFFFFF),
+            child: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const PocketPaint(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }

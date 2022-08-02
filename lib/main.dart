@@ -40,7 +40,7 @@ class PocketPaintApp extends StatelessWidget {
         textStyle: const TextStyle(color: Colors.black),
         borderRadius: BorderRadius.circular(20),
         locale: const Locale('en'),
-        child: const LandingPage(),
+        child: const ProviderScope(child: LandingPage(title: "Pocket Paint")),
       ),
     );
   }

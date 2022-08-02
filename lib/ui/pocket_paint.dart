@@ -19,6 +19,11 @@ class PocketPaint extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(CanvasState.provider.notifier).clearCanvasAndCommandHistory();
+      ref.read(WorkspaceState.provider.notifier).resetWorkspace();
+    });
+
     final isFullscreen = ref.watch(
       WorkspaceState.provider.select((state) => state.isFullscreen),
     );
@@ -29,6 +34,7 @@ class PocketPaint extends ConsumerWidget {
     final canvasWidth =
         ref.watch(CanvasState.provider.select((value) => value.size.width));
     final scale = canvasWidth / (MediaQuery.of(context).size.width + 24);
+
     return WillPopScope(
       onWillPop: () async {
         var willPop = !isFullscreen;

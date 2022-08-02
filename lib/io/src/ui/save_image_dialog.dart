@@ -4,25 +4,41 @@ import 'package:paintroid/io/io.dart';
 part 'image_format_info.dart';
 
 /// Returns [null] if user dismissed the dialog by tapping outside
-Future<ImageMetaData?> showSaveImageDialog(BuildContext context) =>
+Future<ImageMetaData?> showSaveImageDialog(
+        BuildContext context, bool savingProject) =>
     showGeneralDialog<ImageMetaData?>(
         context: context,
-        pageBuilder: (_, __, ___) => const SaveImageDialog(),
+        pageBuilder: (_, __, ___) =>
+            SaveImageDialog(savingProject: savingProject),
         barrierDismissible: true,
         barrierLabel: "Dismiss save image dialog box");
 
 class SaveImageDialog extends StatefulWidget {
-  const SaveImageDialog({Key? key}) : super(key: key);
+  final bool savingProject;
+
+  const SaveImageDialog({Key? key, required this.savingProject})
+      : super(key: key);
 
   @override
-  State<SaveImageDialog> createState() => _SaveImageDialogState();
+  State<SaveImageDialog> createState() =>
+      _SaveImageDialogState(savingProject: savingProject);
 }
 
 class _SaveImageDialogState extends State<SaveImageDialog> {
-  final nameFieldController = TextEditingController(text: "image");
+  final bool savingProject;
+  late final TextEditingController nameFieldController;
   final formKey = GlobalKey<FormState>(debugLabel: "SaveImageDialog Form");
   var selectedFormat = ImageFormat.jpg;
   var imageQualityValue = 100;
+
+  _SaveImageDialogState({required this.savingProject}) {
+    var text = "image";
+    if (savingProject == true) {
+      selectedFormat = ImageFormat.catrobatImage;
+      text = "project";
+    }
+    nameFieldController = TextEditingController(text: text);
+  }
 
   void _dismissDialogWithData() {
     late ImageMetaData data;
@@ -42,8 +58,12 @@ class _SaveImageDialogState extends State<SaveImageDialog> {
 
   @override
   Widget build(BuildContext context) {
+    var dialogTitle = "Save Image";
+    if (savingProject) {
+      dialogTitle = "Save Project";
+    }
     return AlertDialog(
-      title: const Text("Save image"),
+      title: Text(dialogTitle),
       actions: [_cancelButton, _saveButton],
       contentTextStyle: Theme.of(context).textTheme.bodyLarge,
       content: Form(
@@ -54,7 +74,7 @@ class _SaveImageDialogState extends State<SaveImageDialog> {
           children: [
             _imageNameTextField,
             const Divider(height: 16),
-            _imageFormatDropdown,
+            if (!savingProject) _imageFormatDropdown,
             const Divider(height: 8),
             if (selectedFormat == ImageFormat.jpg) _qualitySlider,
             const Divider(height: 8),

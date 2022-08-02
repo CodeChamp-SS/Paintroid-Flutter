@@ -1,14 +1,17 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paintroid/io/io.dart';
 import 'package:paintroid/ui/io_handler.dart';
 import 'package:paintroid/workspace/workspace.dart';
+import 'package:path_provider/path_provider.dart';
 
 enum OverflowMenuOption {
   fullscreen("Fullscreen"),
   saveImage("Save Image"),
+  saveProject("Save Project"),
   loadImage("Load Image"),
   newImage("New Image");
 
@@ -53,6 +56,9 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
       case OverflowMenuOption.saveImage:
         _saveImage();
         break;
+      case OverflowMenuOption.saveProject:
+        _saveProject();
+        break;
       case OverflowMenuOption.loadImage:
         _loadImage();
         break;
@@ -66,10 +72,25 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
       ref.read(WorkspaceState.provider.notifier).toggleFullscreen(true);
 
   Future<void> _saveImage() async {
-    final imageData = await showSaveImageDialog(context);
+    final imageData = await showSaveImageDialog(context, false);
     if (imageData == null) return;
     await ioHandler.saveImage(imageData);
     ref.read(WorkspaceState.provider.notifier).updateLastSavedCommandCount();
+  }
+
+  Future<File?> _saveProject() async {
+    File? savedProject;
+    final imageData = await showSaveImageDialog(context, true);
+
+    if (imageData != null) {
+      savedProject = await ioHandler.saveImage(imageData);
+      Uint8List? imagePreview = await ioHandler.getPreview(imageData);
+      // MemoryImage(imagePreview)
+    }
+
+    // getApplicationDocumentsDirectory()
+
+    return savedProject;
   }
 
   /// Returns [true] if user didn't tap outside of any dialogs
@@ -80,7 +101,7 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
       final shouldDiscard = await showDiscardChangesDialog(context);
       if (shouldDiscard == null || !mounted) return false;
       if (!shouldDiscard) {
-        final imageData = await showSaveImageDialog(context);
+        final imageData = await showSaveImageDialog(context, false);
         if (imageData == null) return false;
         await ioHandler.saveImage(imageData);
         workspaceStateNotifier.updateLastSavedCommandCount();
