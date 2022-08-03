@@ -16,37 +16,37 @@ class IOHandler {
 
   static final provider = Provider((ref) => IOHandler(ref));
 
-  Future<void> loadImage(ImageLocation location) async {
+  Future<bool> loadImage(ImageLocation location) async {
     switch (location) {
       case ImageLocation.photos:
-        await _loadFromPhotos();
-        break;
+        return await _loadFromPhotos();
       case ImageLocation.files:
-        await _loadFromFiles();
-        break;
+        return await _loadFromFiles();
     }
   }
 
-  Future<void> _loadFromPhotos() async {
+  Future<bool> _loadFromPhotos() async {
     final loadImage = ref.read(LoadImageFromPhotoLibrary.provider);
     final result = await loadImage();
-    result.when(
+    return result.when(
       ok: (img) async {
         ref.read(CanvasState.provider.notifier).clearCanvasAndCommandHistory();
         ref.read(WorkspaceState.provider.notifier).setBackgroundImage(img);
+        return true;
       },
       err: (failure) {
         if (failure != LoadImageFailure.userCancelled) {
           showToast(failure.message);
         }
+        return false;
       },
     );
   }
 
-  Future<void> _loadFromFiles() async {
+  Future<bool> _loadFromFiles() async {
     final loadImage = ref.read(LoadImageFromFileManager.provider);
     final result = await loadImage();
-    result.when(
+    return result.when(
       ok: (imageFromFile) async {
         ref.read(CanvasState.provider.notifier).clearCanvasAndCommandHistory();
         if (imageFromFile.catrobatImage != null) {
@@ -58,11 +58,13 @@ class IOHandler {
         imageFromFile.rasterImage == null
             ? workspaceNotifier.clearBackgroundImageAndResetDimensions()
             : workspaceNotifier.setBackgroundImage(imageFromFile.rasterImage!);
+        return true;
       },
       err: (failure) {
         if (failure != LoadImageFailure.userCancelled) {
           showToast(failure.message);
         }
+        return false;
       },
     );
   }

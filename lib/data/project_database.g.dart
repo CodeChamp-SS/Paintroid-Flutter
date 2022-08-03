@@ -82,7 +82,7 @@ class _$ProjectDatabase extends ProjectDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Project` (`name` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `creationDate` INTEGER NOT NULL, `resolution` TEXT, `format` TEXT, `size` INTEGER, `imagePreview` BLOB, `id` INTEGER PRIMARY KEY AUTOINCREMENT)');
+            'CREATE TABLE IF NOT EXISTS `Project` (`name` TEXT NOT NULL, `path` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `creationDate` INTEGER NOT NULL, `resolution` TEXT, `format` TEXT, `size` INTEGER, `imagePreview` BLOB, `id` INTEGER PRIMARY KEY AUTOINCREMENT)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -104,6 +104,22 @@ class _$ProjectDAO extends ProjectDAO {
             'Project',
             (Project item) => <String, Object?>{
                   'name': item.name,
+                  'path': item.path,
+                  'lastModified': _dateTimeConverter.encode(item.lastModified),
+                  'creationDate': _dateTimeConverter.encode(item.creationDate),
+                  'resolution': item.resolution,
+                  'format': item.format,
+                  'size': item.size,
+                  'imagePreview': item.imagePreview,
+                  'id': item.id
+                }),
+        _projectDeletionAdapter = DeletionAdapter(
+            database,
+            'Project',
+            ['id'],
+            (Project item) => <String, Object?>{
+                  'name': item.name,
+                  'path': item.path,
                   'lastModified': _dateTimeConverter.encode(item.lastModified),
                   'creationDate': _dateTimeConverter.encode(item.creationDate),
                   'resolution': item.resolution,
@@ -121,11 +137,14 @@ class _$ProjectDAO extends ProjectDAO {
 
   final InsertionAdapter<Project> _projectInsertionAdapter;
 
+  final DeletionAdapter<Project> _projectDeletionAdapter;
+
   @override
   Future<List<Project>> getProjects() async {
     return _queryAdapter.queryList('SELECT * FROM Project',
         mapper: (Map<String, Object?> row) => Project(
             name: row['name'] as String,
+            path: row['path'] as String,
             lastModified: _dateTimeConverter.decode(row['lastModified'] as int),
             creationDate: _dateTimeConverter.decode(row['creationDate'] as int),
             resolution: row['resolution'] as String?,
@@ -136,9 +155,25 @@ class _$ProjectDAO extends ProjectDAO {
   }
 
   @override
-  Future<List<int>> insertProject(List<Project> projects) {
+  Future<int> insertProject(Project project) {
+    return _projectInsertionAdapter.insertAndReturnId(
+        project, OnConflictStrategy.replace);
+  }
+
+  @override
+  Future<List<int>> insertProjects(List<Project> projects) {
     return _projectInsertionAdapter.insertListAndReturnIds(
-        projects, OnConflictStrategy.abort);
+        projects, OnConflictStrategy.replace);
+  }
+
+  @override
+  Future<void> deleteProject(Project project) async {
+    await _projectDeletionAdapter.delete(project);
+  }
+
+  @override
+  Future<void> deleteProjects(List<Project> projects) async {
+    await _projectDeletionAdapter.deleteList(projects);
   }
 }
 

@@ -28,6 +28,7 @@ class FileService with LoggableMixin implements IFileService {
       if (result.files.single.path == null) {
         throw "file path is null";
       } else {
+        print("path: ${result.files.single.path!}");
         return Result.ok(File(result.files.single.path!));
       }
     } catch (err, stacktrace) {

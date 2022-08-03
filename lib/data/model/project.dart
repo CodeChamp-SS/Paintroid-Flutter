@@ -5,6 +5,7 @@ import 'package:floor/floor.dart';
 @entity
 class Project {
   final String name;
+  final String path;
   final DateTime lastModified;
   final DateTime creationDate;
   final String? resolution;
@@ -16,6 +17,7 @@ class Project {
 
   Project({
     required this.name,
+    required this.path,
     required this.lastModified,
     required this.creationDate,
     this.resolution,

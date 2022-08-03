@@ -11,6 +11,8 @@ import 'package:intl/intl.dart';
 
 import '../io/src/entity/image_location.dart';
 import '../io/src/ui/load_image_dialog.dart';
+import '../workspace/src/state/canvas_state_notifier.dart';
+import '../workspace/src/state/workspace_state_notifier.dart';
 import 'color_schemes.dart';
 import 'io_handler.dart';
 
@@ -29,34 +31,36 @@ class _LandingPageState extends ConsumerState<LandingPage> {
   @override
   void initState() {
     super.initState();
-    $FloorProjectDatabase
-        .databaseBuilder("project_database.db")
-        .build()
-        .then((db) => database = db);
+    $FloorProjectDatabase.databaseBuilder("project_database.db").build().then(
+      (db) {
+        setState(() => database = db);
+      },
+    );
+  }
+
+  Future<List<Project>> _getProjects() async {
+    return await database.projectDAO.getProjects();
+  }
+
+  _navigateToPocketPaint() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PocketPaint(),
+      ),
+    );
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final ioHandler = ref.watch(IOHandler.provider);
     final size = MediaQuery.of(context).size;
-
-    final tempList = [
-      "project 1",
-      "project 2",
-      "project 3",
-      "project 4",
-      "project 5",
-      "project 6"
-    ];
-
-    Future<List<Project>> _getProjects() async {
-      return await database.projectDAO.getProjects();
-    }
+    setState(() {});
 
     return Scaffold(
       backgroundColor: lightColorScheme.primary,
       appBar: AppBar(
-        title: const Text("Pocket Paint"),
+        title: Text(widget.title),
       ),
       body: FutureBuilder(
         future: _getProjects(),
@@ -71,7 +75,11 @@ class _LandingPageState extends ConsumerState<LandingPage> {
                       Material(
                         child: InkWell(
                           onTap: () {},
-                          child: const Placeholder(),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white54,
+                            ),
+                          ),
                         ),
                       ),
                       Center(
@@ -117,6 +125,7 @@ class _LandingPageState extends ConsumerState<LandingPage> {
                       Uint8List? img = project.imagePreview;
                       if (img != null) {
                         imagePreview = BoxDecoration(
+                            color: Colors.white,
                             image: DecorationImage(image: MemoryImage(img)));
                       } else {
                         imagePreview = const BoxDecoration(color: Colors.white);
@@ -169,7 +178,11 @@ class _LandingPageState extends ConsumerState<LandingPage> {
               ],
             );
           } else {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                backgroundColor: Color(0xFFFFDAD6),
+              ),
+            );
           }
         },
       ),
@@ -182,17 +195,20 @@ class _LandingPageState extends ConsumerState<LandingPage> {
             foregroundColor: const Color(0xFFFFFFFF),
             child: const Icon(Icons.file_download),
             onPressed: () async {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const PocketPaint(),
-                ),
-              );
+              late final bool imageLoaded;
               if (Platform.isIOS) {
                 final location = await showLoadImageDialog(context);
                 if (location == null) return;
-                ioHandler.loadImage(location);
+                imageLoaded = await ioHandler.loadImage(location);
               } else {
-                ioHandler.loadImage(ImageLocation.files);
+                imageLoaded = await ioHandler.loadImage(ImageLocation.files);
+              }
+              if (imageLoaded) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const PocketPaint(),
+                  ),
+                );
               }
             },
           ),
@@ -205,11 +221,11 @@ class _LandingPageState extends ConsumerState<LandingPage> {
             foregroundColor: const Color(0xFFFFFFFF),
             child: const Icon(Icons.add),
             onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const PocketPaint(),
-                ),
-              );
+              ref
+                  .read(CanvasState.provider.notifier)
+                  .clearCanvasAndCommandHistory();
+              ref.read(WorkspaceState.provider.notifier).resetWorkspace();
+              _navigateToPocketPaint();
             },
           ),
         ],

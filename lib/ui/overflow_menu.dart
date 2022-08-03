@@ -7,6 +7,9 @@ import 'package:paintroid/io/io.dart';
 import 'package:paintroid/ui/io_handler.dart';
 import 'package:paintroid/workspace/workspace.dart';
 
+import '../data/model/project.dart';
+import '../data/project_database.dart';
+
 enum OverflowMenuOption {
   fullscreen("Fullscreen"),
   saveImage("Save Image"),
@@ -78,19 +81,35 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
     workspaceStateNotifier.updateLastSavedCommandCount();
   }
 
-  Future<File?> _saveProject() async {
+  Future<void> _saveProject() async {
     File? savedProject;
     final imageData = await showSaveImageDialog(context, true);
 
     if (imageData != null) {
       savedProject = await ioHandler.saveImage(imageData);
       Uint8List? imagePreview = await ioHandler.getPreview(imageData);
+      if (savedProject != null) {
+        print('save path: ${savedProject.path}');
+        Project project = Project(
+          name: imageData.name,
+          path: savedProject.path,
+          lastModified: DateTime.now(),
+          creationDate: DateTime.now(),
+          resolution: "",
+          format: imageData.format.name,
+          size: await savedProject.length(),
+          imagePreview: imagePreview,
+        );
+
+        $FloorProjectDatabase
+            .databaseBuilder("project_database.db")
+            .build()
+            .then((db) => db.projectDAO.insertProject(project));
+      }
+
       // MemoryImage(imagePreview)
     }
-
     // getApplicationDocumentsDirectory()
-
-    return savedProject;
   }
 
   /// Returns [true] if user didn't tap outside of any dialogs

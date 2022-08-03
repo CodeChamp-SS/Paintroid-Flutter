@@ -4,8 +4,17 @@ import 'model/project.dart';
 
 @dao
 abstract class ProjectDAO {
-  @insert
-  Future<List<int>> insertProject(List<Project> projects);
+  @Insert(onConflict: OnConflictStrategy.replace)
+  Future<int> insertProject(Project project);
+
+  @Insert(onConflict: OnConflictStrategy.replace)
+  Future<List<int>> insertProjects(List<Project> projects);
+
+  @delete
+  Future<void> deleteProject(Project project);
+
+  @delete
+  Future<void> deleteProjects(List<Project> projects);
 
   @Query('SELECT * FROM Project')
   Future<List<Project>> getProjects();
