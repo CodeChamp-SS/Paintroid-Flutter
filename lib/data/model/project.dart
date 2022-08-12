@@ -4,14 +4,14 @@ import 'package:floor/floor.dart';
 
 @entity
 class Project {
-  final String name;
-  final String path;
-  final DateTime lastModified;
-  final DateTime creationDate;
-  final String? resolution;
-  final String? format;
-  final int? size;
-  final Uint8List? imagePreview;
+  String name;
+  String path;
+  DateTime lastModified;
+  DateTime creationDate;
+  String? resolution;
+  String? format;
+  int? size;
+  String? imagePreviewPath;
   @PrimaryKey(autoGenerate: true)
   final int? id;
 
@@ -23,7 +23,7 @@ class Project {
     this.resolution,
     this.format,
     this.size,
-    this.imagePreview,
+    this.imagePreviewPath,
     this.id,
   });
 }

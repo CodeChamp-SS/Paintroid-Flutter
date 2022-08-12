@@ -82,7 +82,7 @@ class _$ProjectDatabase extends ProjectDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Project` (`name` TEXT NOT NULL, `path` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `creationDate` INTEGER NOT NULL, `resolution` TEXT, `format` TEXT, `size` INTEGER, `imagePreview` BLOB, `id` INTEGER PRIMARY KEY AUTOINCREMENT)');
+            'CREATE TABLE IF NOT EXISTS `Project` (`name` TEXT NOT NULL, `path` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `creationDate` INTEGER NOT NULL, `resolution` TEXT, `format` TEXT, `size` INTEGER, `imagePreviewPath` TEXT, `id` INTEGER PRIMARY KEY AUTOINCREMENT)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -110,7 +110,7 @@ class _$ProjectDAO extends ProjectDAO {
                   'resolution': item.resolution,
                   'format': item.format,
                   'size': item.size,
-                  'imagePreview': item.imagePreview,
+                  'imagePreviewPath': item.imagePreviewPath,
                   'id': item.id
                 }),
         _projectDeletionAdapter = DeletionAdapter(
@@ -125,7 +125,7 @@ class _$ProjectDAO extends ProjectDAO {
                   'resolution': item.resolution,
                   'format': item.format,
                   'size': item.size,
-                  'imagePreview': item.imagePreview,
+                  'imagePreviewPath': item.imagePreviewPath,
                   'id': item.id
                 });
 
@@ -141,7 +141,8 @@ class _$ProjectDAO extends ProjectDAO {
 
   @override
   Future<List<Project>> getProjects() async {
-    return _queryAdapter.queryList('SELECT * FROM Project',
+    return _queryAdapter.queryList(
+        'SELECT * FROM Project order by lastModified desc',
         mapper: (Map<String, Object?> row) => Project(
             name: row['name'] as String,
             path: row['path'] as String,
@@ -150,7 +151,7 @@ class _$ProjectDAO extends ProjectDAO {
             resolution: row['resolution'] as String?,
             format: row['format'] as String?,
             size: row['size'] as int?,
-            imagePreview: row['imagePreview'] as Uint8List?,
+            imagePreviewPath: row['imagePreviewPath'] as String?,
             id: row['id'] as int?));
   }
 

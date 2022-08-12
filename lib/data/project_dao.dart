@@ -16,6 +16,6 @@ abstract class ProjectDAO {
   @delete
   Future<void> deleteProjects(List<Project> projects);
 
-  @Query('SELECT * FROM Project')
+  @Query('SELECT * FROM Project order by lastModified desc')
   Future<List<Project>> getProjects();
 }

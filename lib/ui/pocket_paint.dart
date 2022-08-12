@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:paintroid/io/io.dart';
+import 'package:paintroid/ui/io_handler.dart';
 import 'package:paintroid/ui/top_app_bar.dart';
 import 'package:paintroid/workspace/workspace.dart';
 
 import 'bottom_control_navigation_bar.dart';
 import 'exit_fullscreen_button.dart';
 
-class PocketPaint extends ConsumerWidget {
+class PocketPaint extends ConsumerStatefulWidget {
   const PocketPaint({Key? key}) : super(key: key);
 
+  @override
+  ConsumerState<PocketPaint> createState() => _PocketPaintState();
+}
+
+class _PocketPaintState extends ConsumerState<PocketPaint> {
   void _toggleStatusBar(bool isFullscreen) {
     SystemChrome.setEnabledSystemUIMode(
       isFullscreen ? SystemUiMode.immersiveSticky : SystemUiMode.manual,
@@ -19,7 +25,7 @@ class PocketPaint extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final isFullscreen = ref.watch(
       WorkspaceState.provider.select((state) => state.isFullscreen),
     );

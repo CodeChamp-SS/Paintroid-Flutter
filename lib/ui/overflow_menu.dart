@@ -56,13 +56,13 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
         _enterFullscreen();
         break;
       case OverflowMenuOption.saveImage:
-        ioHandler.saveImage(context, false);
+        ioHandler.saveImage(context, null);
         break;
       case OverflowMenuOption.saveProject:
         _saveProject();
         break;
       case OverflowMenuOption.loadImage:
-        ioHandler.loadImage(context, this);
+        ioHandler.loadImage(context, this, true);
         break;
       case OverflowMenuOption.newImage:
         ioHandler.newImage(context, this);
@@ -77,11 +77,10 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
     File? savedProject;
     final imageData = await showSaveImageDialog(context, true);
 
-    if (imageData != null) {
-      savedProject = await ioHandler.saveImage(context, true);
-      Uint8List? imagePreview = await ioHandler.getPreview(imageData);
+    if (imageData != null && mounted) {
+      savedProject = await ioHandler.saveImage(context, imageData);
+      String? imagePreview = await ioHandler.getPreviewPath(imageData);
       if (savedProject != null) {
-        print('save path: ${savedProject.path}');
         Project project = Project(
           name: imageData.name,
           path: savedProject.path,
@@ -90,17 +89,16 @@ class _OverflowMenuState extends ConsumerState<OverflowMenu> {
           resolution: "",
           format: imageData.format.name,
           size: await savedProject.length(),
-          imagePreview: imagePreview,
+          imagePreviewPath: imagePreview,
         );
 
-        $FloorProjectDatabase
-            .databaseBuilder("project_database.db")
-            .build()
-            .then((db) => db.projectDAO.insertProject(project));
+        final db = await ref.read(ProjectDatabase.provider.future);
+        await db.projectDAO.insertProject(project);
+        // $FloorProjectDatabase
+        //     .databaseBuilder("project_database.db")
+        //     .build()
+        //     .then((db) => db.projectDAO.insertProject(project));
       }
-
-      // MemoryImage(imagePreview)
     }
-    // getApplicationDocumentsDirectory()
   }
 }
